@@ -47,4 +47,12 @@ internal sealed partial class Settings : ApplicationSettingsBase
         get => (bool)this[nameof(DecryptOnReceive)];
         set => this[nameof(DecryptOnReceive)] = value;
     }
+
+    [UserScopedSetting]
+    [DefaultSettingValue("False")]
+    public bool SendAsAscii
+    {
+        get => (bool)this[nameof(SendAsAscii)];
+        set => this[nameof(SendAsAscii)] = value;
+    }
 }

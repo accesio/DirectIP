@@ -43,6 +43,7 @@ partial class MainForm
         this.outputTextBox = new TextBox();
         this.encryptCheckBox = new CheckBox();
         this.decryptCheckBox = new CheckBox();
+        this.asciiCheckBox = new CheckBox();
         this.SuspendLayout();
 
         // imeiLabel
@@ -118,6 +119,13 @@ partial class MainForm
         this.decryptCheckBox.Checked = true;
         this.decryptCheckBox.AutoSize = true;
 
+        // asciiCheckBox
+        this.asciiCheckBox.Location = new System.Drawing.Point(420, 130);
+        this.asciiCheckBox.Name = "asciiCheckBox";
+        this.asciiCheckBox.Size = new System.Drawing.Size(85, 24);
+        this.asciiCheckBox.Text = "Send ASCII";
+        this.asciiCheckBox.AutoSize = true;
+
         // outputTextBox
         this.outputTextBox.Location = new System.Drawing.Point(10, 160);
         this.outputTextBox.Multiline = true;
@@ -128,7 +136,7 @@ partial class MainForm
 
         // MainForm
         this.ClientSize = new System.Drawing.Size(620, 600);
-        this.Controls.AddRange(new Control[] { this.imeiLabel, this.imeiTextBox, this.keyLabel, this.keyTextBox, this.serverLabel, this.serverTextBox, this.payloadLabel, this.payloadTextBox, this.sendButton, this.encryptCheckBox, this.decryptCheckBox, this.outputTextBox });
+        this.Controls.AddRange(new Control[] { this.imeiLabel, this.imeiTextBox, this.keyLabel, this.keyTextBox, this.serverLabel, this.serverTextBox, this.payloadLabel, this.payloadTextBox, this.sendButton, this.encryptCheckBox, this.decryptCheckBox, this.asciiCheckBox, this.outputTextBox });
         this.Name = "MainForm";
         this.Text = "SBD DirectIP Client";
         this.ResumeLayout(false);
@@ -143,4 +151,5 @@ partial class MainForm
     private Label payloadLabel;
     private CheckBox encryptCheckBox;
     private CheckBox decryptCheckBox;
+    private CheckBox asciiCheckBox;
 }

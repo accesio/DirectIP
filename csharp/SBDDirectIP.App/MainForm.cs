@@ -15,6 +15,7 @@ public partial class MainForm : Form
     private TextBox outputTextBox = null!;
     private CheckBox encryptCheckBox = null!;
     private CheckBox decryptCheckBox = null!;
+    private CheckBox asciiCheckBox = null!;
     private System.Threading.CancellationTokenSource? listenerCts;
 
     public MainForm()
@@ -28,6 +29,7 @@ public partial class MainForm : Form
         serverTextBox.Text = Properties.Settings.Default.ServerHostPort;
         encryptCheckBox.Checked = Properties.Settings.Default.EncryptOnSend;
         decryptCheckBox.Checked = Properties.Settings.Default.DecryptOnReceive;
+        asciiCheckBox.Checked = Properties.Settings.Default.SendAsAscii;
     }
 
     private async void OnSend(object? sender, EventArgs e)
@@ -39,22 +41,36 @@ public partial class MainForm : Form
             string imei = imeiTextBox.Text.Trim();
             string keyHex = keyTextBox.Text.Trim();
             string server = serverTextBox.Text.Trim();
-            string payloadHex = payloadTextBox.Text.Trim();
-            var tokens = payloadHex.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (tokens.Length == 0 || tokens.Length > 30)
+            string payloadInput = payloadTextBox.Text.Trim();
+            byte[] payload;
+            if (asciiCheckBox.Checked)
             {
-                Log("Invalid payload length");
-                MessageBox.Show("Payload must be space separated hex bytes (max 30 bytes).");
-                return;
-            }
-            byte[] payload = new byte[tokens.Length];
-            for (int i = 0; i < tokens.Length; i++)
-            {
-                if (tokens[i].Length != 2 || !byte.TryParse(tokens[i], System.Globalization.NumberStyles.HexNumber, null, out payload[i]))
+                payload = System.Text.Encoding.ASCII.GetBytes(payloadInput);
+                if (payload.Length == 0 || payload.Length > 30)
                 {
-                    Log("Invalid payload format");
-                    MessageBox.Show("Payload must be space separated hex bytes like 'AA 55'.");
+                    Log("Invalid ASCII payload length");
+                    MessageBox.Show("ASCII payload must be 1-30 bytes.");
                     return;
+                }
+            }
+            else
+            {
+                var tokens = payloadInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (tokens.Length == 0 || tokens.Length > 30)
+                {
+                    Log("Invalid payload length");
+                    MessageBox.Show("Payload must be space separated hex bytes (max 30 bytes).");
+                    return;
+                }
+                payload = new byte[tokens.Length];
+                for (int i = 0; i < tokens.Length; i++)
+                {
+                    if (tokens[i].Length != 2 || !byte.TryParse(tokens[i], System.Globalization.NumberStyles.HexNumber, null, out payload[i]))
+                    {
+                        Log("Invalid payload format");
+                        MessageBox.Show("Payload must be space separated hex bytes like 'AA 55'.");
+                        return;
+                    }
                 }
             }
             byte[] key = Array.Empty<byte>();
@@ -81,6 +97,7 @@ public partial class MainForm : Form
             settings.ServerHostPort = server;
             settings.EncryptOnSend = encryptCheckBox.Checked;
             settings.DecryptOnReceive = decryptCheckBox.Checked;
+            settings.SendAsAscii = asciiCheckBox.Checked;
             settings.Save();
 
             string host = server; int port = 10800;
@@ -187,13 +204,22 @@ public partial class MainForm : Form
                     plain = decryptor.TransformFinalBlock(mo.Payload, 0, mo.Payload.Length);
                 }
                 string hex = BitConverter.ToString(plain).Replace("-", " ");
-                Invoke(new Action(() => Log($"RX from {mo.Imei}: {hex}")));
+                string ascii = ToPrintableString(plain);
+                Invoke(new Action(() => Log($"RX from {mo.Imei}: {hex} | {ascii}")));
             }
             catch (Exception ex)
             {
                 Invoke(new Action(() => Log($"Receive error: {ex.Message}")));
             }
         }
+    }
+
+    private static string ToPrintableString(ReadOnlySpan<byte> data)
+    {
+        var sb = new System.Text.StringBuilder(data.Length);
+        foreach (byte b in data)
+            sb.Append(b >= 32 && b < 127 ? (char)b : '.');
+        return sb.ToString();
     }
 
     private static async System.Threading.Tasks.Task<int> ReadExactAsync(System.Net.Sockets.NetworkStream stream, Memory<byte> buffer, System.Threading.CancellationToken ct)
